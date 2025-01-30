@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package sherlock.monitoring;
+
+option go_package = "github.com/Camph0r/sherlock/proto/monitoring";
+
+service MonitoringService {
+    rpc StreamMetrics (stream Metrics) returns (Empty) {}
+}
+
+message Metrics {
+    string hardwareMetrics = 1; // might later make this structured
+    string softwareMetrics = 2;
+}
+
+message Empty {}
