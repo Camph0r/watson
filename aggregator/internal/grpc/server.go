@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/Camph0r/UEBA/aggregator/internal/influxdb"
 	monitoring "github.com/Camph0r/UEBA/aggregator/internal/proto"
 	"github.com/Camph0r/UEBA/aggregator/internal/registry"
 	"google.golang.org/grpc"
@@ -13,11 +14,12 @@ import (
 
 type GRPCServer struct {
 	monitoring.UnimplementedMonitoringServiceServer
-	server *grpc.Server
-	listen net.Listener
+	server       *grpc.Server
+	listen       net.Listener
+	influxClient *influxdb.InfluxDBClient
 }
 
-func NewServer(port int, creds credentials.TransportCredentials, deviceReg *registry.Registry) (*GRPCServer, error) {
+func NewServer(port int, creds credentials.TransportCredentials, deviceReg *registry.Registry, influxClient *influxdb.InfluxDBClient) (*GRPCServer, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen: %v", err)
@@ -29,7 +31,11 @@ func NewServer(port int, creds credentials.TransportCredentials, deviceReg *regi
 		grpc.StreamInterceptor(StreamAuthInterceptor(deviceReg)),
 	)
 
-	grpcServer := &GRPCServer{server: s, listen: lis}
+	grpcServer := &GRPCServer{
+		server:       s,
+		listen:       lis,
+		influxClient: influxClient,
+	}
 	monitoring.RegisterMonitoringServiceServer(s, grpcServer)
 
 	log.Printf("server listening at %v", lis.Addr())
@@ -62,7 +68,10 @@ func (s *GRPCServer) StreamMetrics(stream monitoring.MonitoringService_StreamMet
 			log.Printf("Error receiving metrics from %v: %v", deviceID, err)
 			return err
 		}
+		log.Println("Received metrics from: ", deviceID)
 
-		log.Println(deviceID, ": \n", string(data.HardwareMetrics), "\n", string(data.SoftwareMetrics))
+		if err := s.influxClient.WriteMetric(deviceID, data.HardwareMetrics, data.SoftwareMetrics); err != nil {
+			log.Printf("Error writing to InfluxDB: %v", err)
+		}
 	}
 }
