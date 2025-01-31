@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
-	"github.com/Camph0r/watson/aggregator/internal/registry"
+	"github.com/Camph0r/watson/aggregator/internal/certregistry"
 	"github.com/Camph0r/watson/aggregator/internal/security"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -17,7 +18,7 @@ type contextKey string
 const DeviceIDKey contextKey = "deviceID"
 
 // UnaryAuthInterceptor extracts and verifies client cert fingerprint per request
-func UnaryAuthInterceptor(deviceReg *registry.Registry) grpc.UnaryServerInterceptor {
+func UnaryAuthInterceptor(certRegClient *certregistry.Client) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -46,7 +47,16 @@ func UnaryAuthInterceptor(deviceReg *registry.Registry) grpc.UnaryServerIntercep
 		}
 
 		// Verify against registry
-		if !deviceReg.IsDeviceValid(deviceID, fingerprint) {
+		timeOutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		valid, err := certRegClient.ValidateDevice(timeOutCtx, deviceID, fingerprint)
+		if err != nil {
+			log.Printf("Error validating device: %v", err)
+			return nil, errors.New("failed to validate device")
+		}
+		if !valid {
+			log.Printf("Unauthorized stream from %s", deviceID)
+
 			return nil, errors.New("unauthorized device")
 		}
 
@@ -72,7 +82,7 @@ func (w *wrappedServerStream) Context() context.Context {
 }
 
 // StreamAuthInterceptor authenticates the client at stream initialization
-func StreamAuthInterceptor(deviceReg *registry.Registry) grpc.StreamServerInterceptor {
+func StreamAuthInterceptor(certRegClient *certregistry.Client) grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},
 		ss grpc.ServerStream,
@@ -101,10 +111,21 @@ func StreamAuthInterceptor(deviceReg *registry.Registry) grpc.StreamServerInterc
 		}
 
 		// Verify against registry
-		if !deviceReg.IsDeviceValid(deviceID, fingerprint) {
+		timeOutCtx, cancel := context.WithTimeout(ss.Context(), 5*time.Second)
+		defer cancel()
+		valid, err := certRegClient.ValidateDevice(
+			timeOutCtx,
+			deviceID,
+			fingerprint,
+		)
+		if err != nil {
+			log.Printf("Error validating device: %v", err)
+			return errors.New("failed to validate device")
+		}
+		if !valid {
+			log.Printf("Unauthorized stream from %s", deviceID)
 			return errors.New("unauthorized device")
 		}
-
 		log.Printf("Authenticated stream from %s", deviceID)
 
 		// Create a wrapper stream that stores the modified context

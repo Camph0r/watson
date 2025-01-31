@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package certregistry;
+option go_package = "github.com/Camph0r/watson/certregistry/proto";
+
+service CertRegistry {
+  rpc GenerateCertificate(GenerateRequest) returns (GenerateResponse) {}
+  rpc ValidateDevice(ValidateRequest) returns (ValidateResponse) {}
+  rpc RevokeDevice(RevokeRequest) returns (RevokeResponse) {}
+}
+
+message GenerateRequest {
+  string device_id = 1;
+  int32 valid_for = 2;
+}
+
+message GenerateResponse {
+  string certificate_pem = 1;
+  string private_key_pem = 2;
+  string fingerprint = 3;
+}
+
+message ValidateRequest {
+  string device_id = 1;
+  string fingerprint = 2;
+}
+
+message ValidateResponse {
+  bool valid = 1;
+}
+
+message RevokeRequest {
+  string device_id = 1;
+}
+
+message RevokeResponse {
+  bool success = 1;
+}

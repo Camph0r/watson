@@ -10,6 +10,7 @@ type Config struct {
 	CertFile     string
 	KeyFile      string
 	CaCertFile   string
+	CertRegURL   string
 	InfluxURL    string
 	InfluxToken  string
 	InfluxOrg    string
@@ -24,10 +25,11 @@ func Load() (*Config, error) {
 		CertFile:     getEnvOrDefault("AGGREGATOR_CERT_FILE", "certs/server.crt"),
 		KeyFile:      getEnvOrDefault("AGGREGATOR_KEY_FILE", "certs/server.key"),
 		CaCertFile:   getEnvOrDefault("AGGREGATOR_CA_CERT_FILE", "certs/ca.crt"),
-		InfluxURL:    getEnvOrDefault("AGGREGATOR_INFLUX_URL", "http://localhost:8086"),
-		InfluxToken:  getEnvOrDefault("AGGREGATOR_INFLUX_TOKEN", "token"),
-		InfluxOrg:    getEnvOrDefault("AGGREGATOR_INFLUX_ORG", "docs"),
-		InfluxBucket: getEnvOrDefault("AGGREGATOR_INFLUX_BUCKET", "mininet"),
+		CertRegURL:   getEnvOrDefault("CERTREG_URL", "localhost:9081"),
+		InfluxURL:    getEnvOrDefault("INFLUX_URL", "http://localhost:8086"),
+		InfluxToken:  getEnvOrDefault("INFLUX_TOKEN", "token"),
+		InfluxOrg:    getEnvOrDefault("INFLUX_ORG", "docs"),
+		InfluxBucket: getEnvOrDefault("INFLUX_BUCKET", "mininet"),
 	}
 	return cfg, nil
 }

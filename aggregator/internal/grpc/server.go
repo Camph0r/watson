@@ -5,9 +5,9 @@ import (
 	"log"
 	"net"
 
+	"github.com/Camph0r/watson/aggregator/internal/certregistry"
 	"github.com/Camph0r/watson/aggregator/internal/influxdb"
 	monitoring "github.com/Camph0r/watson/aggregator/internal/proto"
-	"github.com/Camph0r/watson/aggregator/internal/registry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -19,7 +19,7 @@ type GRPCServer struct {
 	influxClient *influxdb.InfluxDBClient
 }
 
-func NewServer(port int, creds credentials.TransportCredentials, deviceReg *registry.Registry, influxClient *influxdb.InfluxDBClient) (*GRPCServer, error) {
+func NewServer(port int, creds credentials.TransportCredentials, certRegClient *certregistry.Client, influxClient *influxdb.InfluxDBClient) (*GRPCServer, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen: %v", err)
@@ -27,8 +27,8 @@ func NewServer(port int, creds credentials.TransportCredentials, deviceReg *regi
 
 	s := grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(UnaryAuthInterceptor(deviceReg)),
-		grpc.StreamInterceptor(StreamAuthInterceptor(deviceReg)),
+		grpc.UnaryInterceptor(UnaryAuthInterceptor(certRegClient)),
+		grpc.StreamInterceptor(StreamAuthInterceptor(certRegClient)),
 	)
 
 	grpcServer := &GRPCServer{

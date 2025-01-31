@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package sherlock.monitoring;
 
-option go_package = "github.com/Camph0r/sherlock/proto/monitoring";
+option go_package = "github.com/Camph0r/sherlock/proto";
 
 service MonitoringService {
     rpc StreamMetrics (stream Metrics) returns (Empty) {}
