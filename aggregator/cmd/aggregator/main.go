@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/Camph0r/UEBA/aggregator/internal/config"
-	"github.com/Camph0r/UEBA/aggregator/internal/grpc"
-	"github.com/Camph0r/UEBA/aggregator/internal/influxdb"
-	"github.com/Camph0r/UEBA/aggregator/internal/registry"
-	"github.com/Camph0r/UEBA/aggregator/internal/security"
+	"github.com/Camph0r/watson/aggregator/internal/config"
+	"github.com/Camph0r/watson/aggregator/internal/grpc"
+	"github.com/Camph0r/watson/aggregator/internal/influxdb"
+	"github.com/Camph0r/watson/aggregator/internal/registry"
+	"github.com/Camph0r/watson/aggregator/internal/security"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/Camph0r/UEBA/aggregator
+module github.com/Camph0r/watson/aggregator
 
 go 1.23.5
 

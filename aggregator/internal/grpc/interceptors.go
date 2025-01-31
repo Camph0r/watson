@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/Camph0r/UEBA/aggregator/internal/registry"
-	"github.com/Camph0r/UEBA/aggregator/internal/security"
+	"github.com/Camph0r/watson/aggregator/internal/registry"
+	"github.com/Camph0r/watson/aggregator/internal/security"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"

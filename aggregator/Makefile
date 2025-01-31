@@ -21,14 +21,14 @@ endif
 
 ## deps: Install dependencies
 .PHONY: deps
-deps:
+deps: proto
 	go mod tidy
 	go mod verify
 	@echo "Dependencies updated"
 
 ## build: Build the binary with version information
 .PHONY: build
-build: deps proto
+build: deps
 	mkdir -p $(BUILD_DIR)
 	go build $(LDFLAGS) -o=$(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PACKAGE)
 	@echo "Binary built at $(BUILD_DIR)/$(BINARY_NAME)"

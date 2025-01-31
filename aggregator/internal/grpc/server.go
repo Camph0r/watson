@@ -5,9 +5,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/Camph0r/UEBA/aggregator/internal/influxdb"
-	monitoring "github.com/Camph0r/UEBA/aggregator/internal/proto"
-	"github.com/Camph0r/UEBA/aggregator/internal/registry"
+	"github.com/Camph0r/watson/aggregator/internal/influxdb"
+	monitoring "github.com/Camph0r/watson/aggregator/internal/proto"
+	"github.com/Camph0r/watson/aggregator/internal/registry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
