@@ -2,4 +2,3 @@ venv/
 *.ipynb
 *.json
 *.png
-.env
