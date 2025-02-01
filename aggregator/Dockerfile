@@ -1,22 +1,22 @@
 FROM golang:1.23-alpine AS proto-builder
 
 # Install protobuf compiler
-RUN apk add --no-cache protobuf
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+RUN apk add --no-cache protobuf && \
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 WORKDIR /app
 
 # Copy proto files and generate code
-COPY proto/ ./proto/
 COPY go.mod go.sum ./
+COPY proto/ ./proto/
 
 # Generate proto files
-RUN mkdir -p ./internal/proto
-RUN protoc -I=./proto \
-    --go_out=./internal/proto --go_opt=paths=source_relative \
-    --go-grpc_out=./internal/proto --go-grpc_opt=paths=source_relative \
-    proto/*.proto
+RUN mkdir -p ./internal/proto && \
+    protoc -I=./proto \
+      --go_out=./internal/proto --go_opt=paths=source_relative \
+      --go-grpc_out=./internal/proto --go-grpc_opt=paths=source_relative \
+      proto/*.proto
 
 # Build stage
 FROM golang:1.23-alpine AS builder

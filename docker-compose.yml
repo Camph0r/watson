@@ -20,7 +20,7 @@ services:
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
     volumes:
-      - ./aggregator/certs:/app/certs
+      - ./aggregator/certs:/app/certs:ro
     networks:
       - watson-net
     depends_on:
@@ -39,7 +39,7 @@ services:
       - CERTREG_CA_CERT_FILE=/app/certs/ca.crt
       - CERTREG_KEY_FILE=/app/certs/server.key
     volumes:
-      - ./certregistry/certs:/app/certs
+      - ./certregistry/certs:/app/certs:ro
     networks:
       - watson-net
     depends_on:
@@ -80,7 +80,8 @@ services:
     image: redis:7-alpine
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+      - ./init-redis.sh:/init-redis.sh
+    command: sh -c "redis-server --appendonly yes & sleep 5 && chmod +x /init-redis.sh && /init-redis.sh && wait"
     networks:
       - watson-net
     healthcheck:
