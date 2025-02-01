@@ -1,6 +1,5 @@
 import threading
-from threads.user_thread import monitor_user
-
+from users_thread import monitor_user
 ## For time being, hardcoding the users, later use influx to get uses (host)
 users = [
     {"bucket": "mininet", "hostname": "Camph0r"},

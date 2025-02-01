@@ -3,6 +3,10 @@ import torch.nn as nn
 import numpy as np
 from tqdm import tqdm
 
+# May require to tune the loss function and threshold value
+# also need to fix the frequent loading of model
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 class AE(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
@@ -31,24 +35,15 @@ class AE(nn.Module):
     
 
 
-def train_autoencoder(model, data, epochs=50, lr=0.001):
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    features = torch.tensor(data, dtype=torch.float32)
-    for epoch in tqdm(range(epochs)):
-        optimizer.zero_grad()
-        reconstructed = model(features)
-        loss = criterion(reconstructed, features)
-        loss.backward()
-        optimizer.step()
-        if epoch % 10 == 0:
-            print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
 
-
-def detect_anomalies_autoencoder(model, detection_data):
+def detect_anomalies_autoencoder(model,user, detection_data):
     features = torch.tensor(detection_data, dtype=torch.float32)
+    savedModel = AE(input_shape=features.shape[1])
+    savedModel.load_state_dict(torch.load(f"model/autoencoder-{user}.pth"))
+    savedModel.eval()
     with torch.no_grad():
+
         reconstructed = model(features)
         loss = torch.mean((features - reconstructed) ** 2, dim=1).numpy()
-    threshold = np.mean(loss) + 2 * np.std(loss)
+    threshold = np.mean(loss) + 2 * np.std(loss)  
     return loss, loss > threshold

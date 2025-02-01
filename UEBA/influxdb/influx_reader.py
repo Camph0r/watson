@@ -53,8 +53,3 @@ def get_hardware_metrics(bucket, hostname, time_range="-5d"):
     records['packetsRecv'] = records['network'].apply(lambda x: x['packetsRecv'])
     records = records.drop(columns=['network'],errors='ignore') 
     return records
-
-software_df = get_software_metrics("mininet", "Camph0r")
-hardware_df = get_hardware_metrics("mininet", "Camph0r")
-print(software_df.head())
-print(hardware_df.head()) 

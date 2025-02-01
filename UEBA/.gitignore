@@ -2,3 +2,5 @@ venv/
 *.ipynb
 *.json
 *.png
+saved/
+__pycache__/
