@@ -24,7 +24,7 @@ func NewCertRegistryServer(generator *cert.CertGenerator, store *db.DeviceStore)
 
 func (s *CertRegistryServer) GenerateCertificate(ctx context.Context, req *pb.GenerateRequest) (*pb.GenerateResponse, error) {
 	log.Printf("Generating certificate for device %s", req.DeviceId)
-	certPEM, keyPEM, fingerprint, err := s.generator.GenerateCertificate(req.DeviceId, int(req.ValidFor))
+	certPEM, keyPEM, fingerprint, err := s.generator.GenerateCertificate(req.DeviceId, int(req.ValidFor), req.Domains, req.IpAddresses)
 	if err != nil {
 		return nil, err
 	}

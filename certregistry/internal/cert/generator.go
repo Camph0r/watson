@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"net"
 	"os"
 	"time"
 )
@@ -68,23 +69,32 @@ func NewCertGenerator(caCertPath, caKeyPath string) (*CertGenerator, error) {
 	}, nil
 }
 
-func (g *CertGenerator) GenerateCertificate(deviceID string, validFor int) (certPEM, keyPEM []byte, fingerprint string, err error) {
+func (g *CertGenerator) GenerateCertificate(deviceID string, validFor int, domains []string, ipaddr []string) (certPEM, keyPEM []byte, fingerprint string, err error) {
 	// Generate key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
+	ips := make([]net.IP, len(ipaddr))
+	for i, ip := range ipaddr {
+		ips[i] = net.ParseIP(ip)
+	}
+
 	// Create certificate template
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			CommonName: deviceID,
+			CommonName:   deviceID,
+			Country:      []string{"NP"},
+			Organization: []string{"Pulchowk Campus"},
 		},
+		DNSNames:              domains,
+		IPAddresses:           ips,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(0, 0, validFor),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageDataEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
 

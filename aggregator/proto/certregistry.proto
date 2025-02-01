@@ -12,6 +12,8 @@ service CertRegistry {
 message GenerateRequest {
   string device_id = 1;
   int32 valid_for = 2;
+  repeated string domains = 3;
+  repeated string ip_addresses = 4;
 }
 
 message GenerateResponse {
