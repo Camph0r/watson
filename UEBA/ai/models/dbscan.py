@@ -20,9 +20,9 @@ def load_dbscan_model(user):
         model = pickle.load(f)
     return model
 
-def detect_anomalies_dbscan(user,df):
-    model = load_dbscan_model(user)
+def detect_anomalies_dbscan(df, model):
+  
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(df[['cpu_percent', 'mem_percent', 'threads']])
-    df['anomaly'] = model.predict(features_scaled)
+    df['anomaly'] = model.fit_predict(features_scaled)
     return df[df['anomaly'] == -1]

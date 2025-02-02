@@ -2,7 +2,7 @@ from sklearn.ensemble import IsolationForest
 import pickle
 
 def train_iforest(df):
-    features = df[["cpu_usage", "disk_usage", "memory_usage", "swap"]]  # But swap data is not quite useful
+    features = df[["cpu_usage", "disk_usage", "memory_usage", "swap", "packetsSent", "packetsRecv"]]  # But swap data is not quite useful
     model = IsolationForest(n_estimators=100, contamination=0.1, random_state=42)
     model.fit(features)
     return model
@@ -19,8 +19,8 @@ def load_iforest_model(user):
     return model
 
 
-def detect_anomalies_iforest(user, df):
-    model = load_iforest_model(user)
-    features = df[["cpu_usage", "disk_usage", "memory_usage", "swap"]]
+def detect_anomalies_iforest(df, model):
+
+    features = df[["cpu_usage", "disk_usage", "memory_usage", "swap", "packetsSent", "packetsRecv"]]
     df["anomaly"] = model.predict(features)
     return df[df["anomaly"] == -1]

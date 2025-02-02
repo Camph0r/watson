@@ -1,16 +1,23 @@
 import threading
-from users_thread import monitor_user
+from threads.users_thread import monitor_user
 ## For time being, hardcoding the users, later use influx to get uses (host)
-users = [
-    {"bucket": "mininet", "hostname": "Camph0r"},
-    {"bucket": "mininet", "hostname": "mininet-vm"}
-]
+## change to use the env variables later
 
-threads = []
-for user in users:
-    thread = threading.Thread(target=monitor_user, args=(user["bucket"], user["hostname"]))
-    thread.start()
-    threads.append(thread)
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+def run_thread():
+    
+    users = [
+        {"bucket": "mininet", "hostname": "Camph0r"},
+        # {"bucket": "mininet", "hostname": "mininet-vm"}
+    ]
 
-for thread in threads:
-    thread.join()
+    threads = []
+    for user in users:
+        thread = threading.Thread(target=monitor_user, args=(user["bucket"], user["hostname"]))
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()

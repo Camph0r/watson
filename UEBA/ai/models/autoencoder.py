@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 # May require to tune the loss function and threshold value
-# also need to fix the frequent loading of model
+# model input shape is static and hardcoded
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AE(nn.Module):
@@ -34,16 +34,20 @@ class AE(nn.Module):
         return reconstructed
     
 
+def load_autoencoder_model(user):
+    model = AE(input_shape=3)
+    model.load_state_dict(torch.load(f"saved/{user}/autoencoder.pth"))
+    model.eval()
+    return model
 
-
-def detect_anomalies_autoencoder(model,user, detection_data):
-    features = torch.tensor(detection_data, dtype=torch.float32)
-    savedModel = AE(input_shape=features.shape[1])
-    savedModel.load_state_dict(torch.load(f"model/autoencoder-{user}.pth"))
-    savedModel.eval()
+def detect_anomalies_autoencoder(model, detection_data):
+    features = detection_data[['cpu_percent', 'mem_percent', 'threads']].values
+    features = torch.tensor(features, dtype=torch.float32)
+ 
+    
     with torch.no_grad():
-
         reconstructed = model(features)
         loss = torch.mean((features - reconstructed) ** 2, dim=1).numpy()
+
     threshold = np.mean(loss) + 2 * np.std(loss)  
     return loss, loss > threshold

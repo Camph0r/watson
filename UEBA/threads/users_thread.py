@@ -1,25 +1,33 @@
-import threading
 import time
-import pandas as pd
-from influxdb.influx_reader import query_metrics
-from ai.models.isolation_forest import train_iforest, detect_anomalies_iforest
+from influxdb.influx_reader import get_hardware_metrics, get_software_metrics
+from ai.models.isolation_forest import detect_anomalies_iforest,load_iforest_model
+from ai.models.dbscan import load_dbscan_model, detect_anomalies_dbscan
+from ai.models.autoencoder import detect_anomalies_autoencoder, load_autoencoder_model
 
+# import sys
+# import os
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # Check trainging process
 
 
 
 def monitor_user(bucket, hostname):
-    records = query_metrics(bucket, hostname, metrics="harwareMetrics")
-    df = pd.DataFrame(records)
-    baseline = df[["cpu_usage", "disk_usage", "memory_usage", "swap"]].iloc[:100]
-    model = train_iforest(baseline) ## will change to save the model
+    
+    iforest_model = load_iforest_model(hostname)
+    dbscan_model = load_dbscan_model(hostname)
+    autoencoder_model = load_autoencoder_model(hostname)
+
     while True:
-        new_records = query_metrics(bucket, hostname, time_range="-5s")
-        if new_records:
-            detection = pd.DataFrame(new_records)
-            anomalies = detect_anomalies_iforest(model, detection)
-            if not anomalies.empty: ## Later save as log and alert
-                print(f"Warning: Malicious metric detected at {anomalies['_time'].iloc[-1]} in host {hostname}")
+        hardware_metrics = get_hardware_metrics(bucket, hostname, time_range="-10s")
+        software_metrics = get_software_metrics(bucket, hostname, time_range="-10s")
+        auto, encoder = detect_anomalies_autoencoder(autoencoder_model, software_metrics)
+        iforest = detect_anomalies_iforest(hardware_metrics, iforest_model)
+        dbscan = detect_anomalies_dbscan(software_metrics, dbscan_model)
+        
+        print("From auto: ", auto,encoder)
+        print("Fron iforest: ", iforest)
+        print("From dbscan: ",dbscan)
+         
         time.sleep(5)
      
     

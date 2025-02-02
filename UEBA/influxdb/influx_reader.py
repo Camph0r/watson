@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = influxdb_client.InfluxDBClient(url="http://localhost:8086", token=os.getenv("INFLUX_TOKEN"), org="docs")
+client = influxdb_client.InfluxDBClient(url="http://localhost:8086", token=os.getenv("INFLUX_TOKEN"), org=os.getenv("INFLUX_ORG"))
 query_api = client.query_api()
 def query_metrics(bucket, hostname, metric_type, time_range="-5d"):
     query = f'''
@@ -49,7 +49,9 @@ def get_hardware_metrics(bucket, hostname, time_range="-5d"):
 
             records.append(record)
     records = pd.DataFrame(records)
+    
     records['packetsSent'] = records['network'].apply(lambda x: x['packetsSent'])
     records['packetsRecv'] = records['network'].apply(lambda x: x['packetsRecv'])
-    records = records.drop(columns=['network'],errors='ignore') 
+    records = records.drop(columns=['network'],errors='ignore',axis=1) 
+    
     return records
