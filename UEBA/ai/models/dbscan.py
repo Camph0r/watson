@@ -25,4 +25,4 @@ def detect_anomalies_dbscan(df, model):
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(df[['cpu_percent', 'mem_percent', 'threads']])
     df['anomaly'] = model.fit_predict(features_scaled)
-    return df[df['anomaly'] == -1]
+    return df

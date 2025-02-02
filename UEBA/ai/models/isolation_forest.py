@@ -23,4 +23,4 @@ def detect_anomalies_iforest(df, model):
 
     features = df[["cpu_usage", "disk_usage", "memory_usage", "swap", "packetsSent", "packetsRecv"]]
     df["anomaly"] = model.predict(features)
-    return df[df["anomaly"] == -1]
+    return df
