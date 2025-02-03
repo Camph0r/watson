@@ -1,6 +1,6 @@
 venv/
 *.ipynb
-*.json
+*.log
 *.png
 saved/
 __pycache__/

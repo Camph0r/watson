@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 # May require to tune the loss function and threshold value
 # model input shape is static and hardcoded
+# try huber loss later
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AE(nn.Module):
@@ -49,5 +50,5 @@ def detect_anomalies_autoencoder(model, detection_data):
         reconstructed = model(features)
         loss = torch.mean((features - reconstructed) ** 2, dim=1).numpy()
 
-    threshold = np.mean(loss) + 2 * np.std(loss)  
+    threshold = np.mean(loss) + 3 * np.std(loss)  
     return loss, loss > threshold
