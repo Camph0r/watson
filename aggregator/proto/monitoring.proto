@@ -2,15 +2,38 @@ syntax = "proto3";
 
 package sherlock.monitoring;
 
-option go_package = "github.com/Camph0r/sherlock/proto";
+option go_package = "github.com/Camph0r/watson/aggregator/proto";
 
 service MonitoringService {
     rpc StreamMetrics (stream Metrics) returns (Empty) {}
 }
 
 message Metrics {
-    string hardwareMetrics = 1; // might later make this structured
-    string softwareMetrics = 2;
+    HardwareMetrics hardware_metrics = 1;
+    repeated SoftwareMetrics software_metrics = 2;
+}
+
+message HardwareMetrics {
+    optional int32 cpu_usage = 1;
+    optional int32 disk_usage = 2;
+    optional int32 memory_usage = 3;
+    optional int32 swap_usage = 4;
+    NetworkMetrics network = 5;
+}
+
+message NetworkMetrics {
+    optional uint64 packets_sent = 1;
+    optional uint64 packets_recv = 2;
+}
+
+message SoftwareMetrics {
+    string name = 1;
+    optional double cpu_percent = 2;
+    optional float mem_percent = 3;
+    int32 pid = 4;
+    int64 created_at = 5;  // Unix timestamp in UTC
+    optional int32 threads = 6;
+    float score = 7;
 }
 
 message Empty {}
