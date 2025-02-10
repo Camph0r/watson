@@ -42,6 +42,8 @@ def load_autoencoder_model(user):
     return model
 
 def detect_anomalies_autoencoder(model, detection_data):
+    if detection_data is None:
+        return None, None
     features = detection_data[['cpu_percent', 'mem_percent', 'threads']].values
     features = torch.tensor(features, dtype=torch.float32)
  

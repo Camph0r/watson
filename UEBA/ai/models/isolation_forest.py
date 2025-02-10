@@ -20,6 +20,8 @@ def load_iforest_model(user):
 
 
 def detect_anomalies_iforest(df, model):
+    if df.empty:
+        return df
 
     features = df[["cpu_usage", "disk_usage", "memory_usage", "swap", "packetsSent", "packetsRecv"]]
     df["anomaly"] = model.predict(features)

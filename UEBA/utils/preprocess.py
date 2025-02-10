@@ -1,6 +1,6 @@
 from utils.logger import log_anomaly
 
-
+# this is a test script to simulate the process using stats
 def detect_unusual_processes(df, baseline, hostname):
     result =  df[~df['name'].isin(baseline.index)]
     for _, row in result.iterrows():

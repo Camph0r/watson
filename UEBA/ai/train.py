@@ -7,15 +7,10 @@ from models.isolation_forest import save_iforest_model, train_iforest
 ## Remember to remove later
 import sys
 import os
-from influxdb.influx_reader import get_hardware_metrics, get_software_metrics
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-
-
-
 
 def train_autoencoder(df, save_path,epochs=100, lr=0.001):
     model = AE(input_shape=3).to(device)
@@ -47,7 +42,3 @@ def train_models(df_software,df_hardware, user):
     iforest_model = train_iforest(df_hardware)
     save_iforest_model(iforest_model, user)
 
-hardware = get_hardware_metrics("mininet", "Camph0r")
-software = get_software_metrics("mininet", "Camph0r")
-
-train_models(software,hardware , "Camph0r")

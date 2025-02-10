@@ -21,6 +21,8 @@ def load_dbscan_model(user):
     return model
 
 def detect_anomalies_dbscan(df, model):
+    if df.empty:
+        return df
   
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(df[['cpu_percent', 'mem_percent', 'threads']])

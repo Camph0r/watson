@@ -6,3 +6,4 @@ logging.basicConfig(filename="anomalies.log", level=logging.INFO, format="%(mess
 def log_anomaly(anomaly_type, hostname, severity, details):
     log_entry = f"{datetime.now().isoformat()} {anomaly_type} {hostname} {severity} {details}"
     logging.info(log_entry)
+
