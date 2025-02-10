@@ -8,6 +8,8 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go"
 	"github.com/influxdata/influxdb-client-go/api"
 	"github.com/influxdata/influxdb-client-go/domain"
+
+	pb "github.com/Camph0r/watson/aggregator/internal/proto"
 )
 
 type InfluxDBClient struct {
@@ -55,7 +57,7 @@ func (c *InfluxDBClient) Close() {
 	c.client.Close()
 }
 
-func (c *InfluxDBClient) WriteMetric(deviceID, hardwareMetrics, softwareMetrics string) error {
+func (c *InfluxDBClient) WriteMetric(deviceID string, hardwareMetrics *pb.HardwareMetrics, softwareMetrics []*pb.SoftwareMetrics) error {
 	p := influxdb2.NewPoint(
 		"metrics",
 		map[string]string{"deviceID": deviceID},

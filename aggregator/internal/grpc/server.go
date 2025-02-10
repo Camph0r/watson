@@ -7,13 +7,13 @@ import (
 
 	"github.com/Camph0r/watson/aggregator/internal/certregistry"
 	"github.com/Camph0r/watson/aggregator/internal/influxdb"
-	monitoring "github.com/Camph0r/watson/aggregator/internal/proto"
+	pb "github.com/Camph0r/watson/aggregator/internal/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 type GRPCServer struct {
-	monitoring.UnimplementedMonitoringServiceServer
+	pb.UnimplementedMonitoringServiceServer
 	server       *grpc.Server
 	listen       net.Listener
 	influxClient *influxdb.InfluxDBClient
@@ -36,7 +36,7 @@ func NewServer(port int, creds credentials.TransportCredentials, certRegClient *
 		listen:       lis,
 		influxClient: influxClient,
 	}
-	monitoring.RegisterMonitoringServiceServer(s, grpcServer)
+	pb.RegisterMonitoringServiceServer(s, grpcServer)
 
 	log.Printf("server listening at %v", lis.Addr())
 	return grpcServer, nil
@@ -58,7 +58,7 @@ func (g *GRPCServer) Shutdown() error {
 	return nil
 }
 
-func (s *GRPCServer) StreamMetrics(stream monitoring.MonitoringService_StreamMetricsServer) error {
+func (s *GRPCServer) StreamMetrics(stream pb.MonitoringService_StreamMetricsServer) error {
 	ctx := stream.Context()
 	deviceID, _ := ctx.Value(DeviceIDKey).(string)
 
