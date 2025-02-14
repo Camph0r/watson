@@ -2,10 +2,15 @@ import influxdb_client
 import os
 import logging
 from influxdb.check_client import write_api
+from dotenv import load_dotenv
+
+load_dotenv()
+BUCKET = os.getenv("INFLUX_WRITE_BUCKET")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", filename="ueba.log")
 
 def write_hw_anomalies(df, hostname):
     if df.empty:
-      logging.warning(f"No data available to write for {hostname} regarding hardware.")
+      logging.warning(f"No hardware data available to write for {hostname}")
       return
     
     
@@ -31,8 +36,9 @@ def write_hw_anomalies(df, hostname):
      logging.error(f"Failed to write anomaly data: {e}")
 
 def write_sw_anomalies(df, hostname):
+
   if df.empty:
-    logging.warning(f"No data available to write for {hostname} regarding hardware.")
+    logging.warning(f"No software data available to write for {hostname}")
     return
     
     
@@ -46,6 +52,7 @@ def write_sw_anomalies(df, hostname):
   .field("mem_percent", row["mem_percent"]) \
   .field("threads_count", row["threads"]) \
   .field("process-created", row["created"].isoformat()) \
+  .field("reconstruction_error", row["reconstruction_error"]) \
   .tag("severity", severity) \
   .time(row["_time"])
   try:

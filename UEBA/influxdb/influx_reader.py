@@ -6,7 +6,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import logging
 from influxdb.check_client import query_api
-import time
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", filename="ueba.log")
 

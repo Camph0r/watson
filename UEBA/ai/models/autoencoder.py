@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import os
 from tqdm import tqdm
 
-# May require to tune the loss function and threshold value
-# model input shape is static and hardcoded
 # try huber loss later
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AE(nn.Module):
@@ -37,7 +37,10 @@ class AE(nn.Module):
 
 def load_autoencoder_model(user):
     model = AE(input_shape=3)
-    model.load_state_dict(torch.load(f"saved/{user}/autoencoder.pth"))
+    model_path = f"saved/{user}/autoencoder.pth"
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"No model found for user: {user}")
+    model.load_state_dict(torch.load(model_path))
     model.eval()
     return model
 

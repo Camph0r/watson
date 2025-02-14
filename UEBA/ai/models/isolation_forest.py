@@ -1,4 +1,5 @@
 from sklearn.ensemble import IsolationForest
+import os
 import pickle
 
 def train_iforest(df):
@@ -14,6 +15,8 @@ def save_iforest_model(model, user):
 
 def load_iforest_model(user):
     model_path = f"saved/{user}/iforest.pkl"
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"No model found for user: {user}")
     with open(model_path, 'rb') as f:
         model = pickle.load(f)
     return model

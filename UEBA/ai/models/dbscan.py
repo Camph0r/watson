@@ -1,5 +1,6 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
+import os
 import pickle
 
 def train_dbscan(df):
@@ -16,6 +17,8 @@ def save_dbscan_model(model, user):
 
 def load_dbscan_model(user):
     model_path = f"saved/{user}/dbscan.pkl"
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"No model found for user: {user}")
     with open(model_path, 'rb') as f:
         model = pickle.load(f)
     return model
