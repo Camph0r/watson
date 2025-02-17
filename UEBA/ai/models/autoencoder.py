@@ -4,7 +4,6 @@ import numpy as np
 import os
 from tqdm import tqdm
 
-# try huber loss later
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -12,16 +11,16 @@ class AE(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
         self.encoder_hidden_layer = nn.Linear(
-            in_features=kwargs["input_shape"], out_features=64
+            in_features=kwargs["input_shape"], out_features=8
         )
         self.encoder_output_layer = nn.Linear(
-            in_features=64, out_features=32
+            in_features=8, out_features=4
         )
         self.decoder_hidden_layer = nn.Linear(
-            in_features=32, out_features=64
+            in_features=4, out_features=8
         )
         self.decoder_output_layer = nn.Linear(
-            in_features=64, out_features=kwargs["input_shape"]
+            in_features=8, out_features=kwargs["input_shape"]
         )
 
     def forward(self, features):

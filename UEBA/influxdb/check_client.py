@@ -6,11 +6,19 @@ import logging
 from dotenv import load_dotenv
 
 load_dotenv()
-URL=os.getenv("INFLUX_URL")
-TOKEN=os.getenv("INFLUX_TOKEN")
-ORG=os.getenv("INFLUX_ORG")
+if os.getenv("PRODUCTION") == "true":
+    URL = os.getenv("INFLUX_URL")
+else:
+    URL = "http://localhost:8086"
+TOKEN = os.getenv("INFLUX_TOKEN")
+ORG = os.getenv("INFLUX_ORG")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", filename="ueba.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename="ueba.log",
+)
+
 
 def connect_to_influx():
 
@@ -19,17 +27,13 @@ def connect_to_influx():
 
     for count in range(1, tries_count + 1):
         try:
-            client = influxdb_client.InfluxDBClient(
-                url=URL,
-                token=TOKEN,
-                org=ORG
-            )
+            client = influxdb_client.InfluxDBClient(url=URL, token=TOKEN, org=ORG)
             if client.ping():
                 logging.info("Connected to InfluxDB successfully.")
                 return client
             else:
                 raise ConnectionError(f"Connection failed in attempt {count}")
-        
+
         except Exception as e:
             logging.error(f"Unsuccessful request: {e}")
             if count < tries_count:

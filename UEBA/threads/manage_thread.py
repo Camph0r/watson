@@ -7,10 +7,15 @@ import json
 import time
 import logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", filename="ueba.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename="ueba.log",
+)
 load_dotenv()
 INFLUX_BUCKET = os.getenv("INFLUX_BUCKET")
 USERS = json.loads(os.getenv("USERS"))
+
 
 def run_thread():
 
@@ -24,9 +29,9 @@ def run_thread():
         try:
             time.sleep(5)
             for user, thread in threads.items():
-    
-               if not thread.is_alive():
-                   logging.warning(f"Restarting thread for '{user}'")
+
+                if not thread.is_alive():
+                    logging.warning(f"Restarting thread for '{user}'")
                 #    new_thread = threading.Thread(target=monitor_user, args=(INFLUX_BUCKET, user))
                 #    new_thread.daemon = True
                 #    new_thread.start()
@@ -35,7 +40,5 @@ def run_thread():
             logging.info("Exiting the program")
             sys.exit(0)
         except Exception as e:
-                logging.error(e)
-                time.sleep(5)
-             
-        
+            logging.error(e)
+            time.sleep(5)
