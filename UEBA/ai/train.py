@@ -4,13 +4,14 @@ from tqdm import tqdm
 from models.autoencoder import AE
 from models.dbscan import train_dbscan, save_dbscan_model
 from models.isolation_forest import save_iforest_model, train_iforest
+from sklearn.preprocessing import StandardScaler
 import sys
 import os
 import logging
-
+from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# from influxdb.influx_reader import get_software_metrics, get_hardware_metrics
-
+from influxdb.influx_reader import get_software_metrics, get_hardware_metrics
+import json
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logging.basicConfig(
     level=logging.INFO,
@@ -18,21 +19,33 @@ logging.basicConfig(
     filename="ueba.log",
 )
 
+def create_sequences(data, seq_len):
+    sequences = []
+    for i in range(len(data) - seq_len):
+        seq = data[i:i+seq_len]
+        sequences.append(seq)
+    return torch.stack(sequences)
 
-def train_autoencoder(df, save_path, epochs=100, lr=0.01):
+
+def train_autoencoder(df, save_path, epochs=1000, lr=0.001):
     try:
-        model = AE(input_shape=3).to(device)
+        scaler = StandardScaler()
+        scaled_features = scaler.fit_transform(df[["cpu_percent", "mem_percent", "threads"]])
+        features = torch.tensor(scaled_features, dtype=torch.float32)
+   
+      
+        sequences = create_sequences(features, seq_len=10)
+        model = AE(input_shape=3, seq_len=10).to(device)
         criterion = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        features = df[["cpu_percent", "mem_percent", "threads"]].values
-        features = torch.tensor(features, dtype=torch.float32)
+
         for epoch in tqdm(range(epochs)):
             optimizer.zero_grad()
-            reconstructed = model(features)
-            loss = criterion(reconstructed, features)
+            reconstructed = model(sequences.to(device))
+            loss = criterion(reconstructed, sequences.to(device))
             loss.backward()
             optimizer.step()
-            if epoch % 10 == 0:
+            if epoch % 50 == 0:
                 print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
 
         torch.save(model.state_dict(), os.path.join(save_path, "autoencoder.pth"))

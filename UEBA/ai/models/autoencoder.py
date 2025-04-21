@@ -6,36 +6,35 @@ from tqdm import tqdm
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    
 class AE(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
-        self.encoder_hidden_layer = nn.Linear(
-            in_features=kwargs["input_shape"], out_features=8
-        )
-        self.encoder_output_layer = nn.Linear(
-            in_features=8, out_features=4
-        )
-        self.decoder_hidden_layer = nn.Linear(
-            in_features=4, out_features=8
-        )
-        self.decoder_output_layer = nn.Linear(
-            in_features=8, out_features=kwargs["input_shape"]
-        )
+        input_dim = kwargs["input_shape"]
+        seq_len = kwargs["seq_len"]
+        latent_dim = 4
+        hidden_dim = 16
 
-    def forward(self, features):
-        activation = self.encoder_hidden_layer(features)
-        activation = torch.relu(activation)
-        code = self.encoder_output_layer(activation)
-        code = torch.relu(code)
-        activation = self.decoder_hidden_layer(code)
-        activation = torch.relu(activation)
-        reconstructed = self.decoder_output_layer(activation)
+        self.seq_len = seq_len
+        self.input_dim = input_dim
+
+        self.encoder_lstm = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, batch_first=True)
+        self.encoder_fc = nn.Linear(hidden_dim, latent_dim)
+
+        self.decoder_fc = nn.Linear(latent_dim, hidden_dim)
+        self.decoder_lstm = nn.LSTM(input_size=hidden_dim, hidden_size=input_dim, batch_first=True)
+
+    def forward(self, x):
+      
+        _, (h_n, _) = self.encoder_lstm(x)
+        latent = self.encoder_fc(h_n[-1])  # [batch, latent_dim]
+
+        repeated = self.decoder_fc(latent).unsqueeze(1).repeat(1, self.seq_len, 1)
+        reconstructed, _ = self.decoder_lstm(repeated)
         return reconstructed
-    
 
-def load_autoencoder_model(user):
-    model = AE(input_shape=3)
+def load_autoencoder_model(user, input_shape=3, seq_len=10):
+    model = AE(input_shape=input_shape, seq_len=seq_len).to(device)
     model_path = f"saved/{user}/autoencoder.pth"
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"No model found for user: {user}")
@@ -43,16 +42,11 @@ def load_autoencoder_model(user):
     model.eval()
     return model
 
-def detect_anomalies_autoencoder(model, detection_data):
-    if detection_data is None:
-        return None, None
-    features = detection_data[['cpu_percent', 'mem_percent', 'threads']].values
-    features = torch.tensor(features, dtype=torch.float32)
- 
+def detect_anomalies_autoencoder(model, torch_sequence):
     
     with torch.no_grad():
-        reconstructed = model(features)
-        loss = torch.mean((features - reconstructed) ** 2, dim=1).numpy()
+        reconstructed = model(torch_sequence)
+        loss = torch.mean((torch_sequence - reconstructed) ** 2, dim=1).numpy()
 
     threshold = np.mean(loss) + 3 * np.std(loss)  
     return loss, loss > threshold
