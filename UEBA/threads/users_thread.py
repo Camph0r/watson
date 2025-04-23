@@ -5,16 +5,16 @@ from ai.models.autoencoder import detect_anomalies_autoencoder, load_autoencoder
 import pandas as pd
 from influxdb.influx_writer import write_hw_anomalies, write_sw_anomalies
 import logging
-from collections import deque   
+from collections import deque
 import torch
 from sklearn.preprocessing import StandardScaler
 import numpy as np
+
 # from utils.preprocess import process_anomaly_detection
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-## NEED TO FIX DIMENSION RELATED ERRORS
+
+logger = logging.getLogger(__name__)
+# NEED TO SAVE SCALER FOR EACH USER
 # Try direct checking of host status
 
 
@@ -25,45 +25,40 @@ def monitor_user(bucket, hostname):
         autoencoder_model = load_autoencoder_model(hostname)
         autoencoder_model.eval()
         scaler = StandardScaler()
-        
+
         buffer = deque(maxlen=10)
-        buffer_index = deque(maxlen=10)
+
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         return
 
     while True:
         try:
+
             hardware_metrics = get_hardware_metrics(bucket, hostname, time_range="-7s")
             software_metrics = get_software_metrics(bucket, hostname, time_range="-7s")
-            if software_metrics.empty:
-                time.sleep(2)
-                continue
+
             iforest = detect_anomalies_iforest(hardware_metrics, iforest_model)
             write_hw_anomalies(iforest, hostname)
-            values = software_metrics[["cpu_percent", "mem_percent", "threads"]].values
-       
-            buffer.extend(values)
-            buffer_index.extend(software_metrics.index)
+
+            scaled = scaler.transform(
+                software_metrics[["cpu_percent", "mem_percent", "threads"]]
+            )
+            reshaped = scaled.reshape(-1)  # Shape (60,)
+            buffer.append(reshaped)
 
             if len(buffer) == 10:
-                sequence = np.array(buffer)
-                scaler = StandardScaler()
-                scaled_seq = scaler.fit_transform(sequence)
-                seq_tensor = torch.tensor(np.array(scaled_seq).reshape(1, 10, 3), dtype=torch.float32)
-                loss, is_anomaly = detect_anomalies_autoencoder(autoencoder_model, seq_tensor)
+                sequence = np.array(buffer).reshape(1, 10, 60)
 
-                index = list(buffer_index)[-1:]
-                sw_df = pd.DataFrame(index=index)
-                sw_df["reconstruction_error"] = loss
-                sw_df["is_anomaly"] = is_anomaly
+                torch_seq = torch.tensor(sequence, dtype=torch.float32)
 
-                write_sw_anomalies(sw_df, hostname)
-            
-       
-            
+                loss, is_anomaly = detect_anomalies_autoencoder(
+                    autoencoder_model, torch_seq
+                )
+                print(f"Loss: {loss:.6f}, Anomaly: {bool(is_anomaly)}")
+
             # process_anomaly_detection(software_metrics, hostname)
             time.sleep(5)
         except Exception as e:
-            logging.warning(f"While monitoring {hostname}: {e}")
+            logger.warning(f"While monitoring {hostname}: {e}")
             time.sleep(5)

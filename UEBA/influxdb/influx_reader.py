@@ -8,11 +8,11 @@ import logging
 from influxdb.check_client import query_api
 
 load_dotenv()
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    filename="ueba.log",
-)
+
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 
 def query_metrics(bucket, hostname, metric_type, time_range="-5d"):
@@ -42,13 +42,14 @@ def get_software_metrics(bucket, hostname, time_range="-5d"):
         for row in table.records:
             values = row.values
             record = json.loads(values["_value"])
-            record = pd.DataFrame(record)
-            record["created"] = pd.to_datetime(record["created"])
-            record = record.drop(columns=["score"], errors="ignore")
-            record["_time"] = values["_time"]
-            records.append(record)
-    df = pd.concat(records).reset_index(drop=True)
-    return df
+            df = pd.DataFrame(record)
+            df["created"] = pd.to_datetime(df["created"])
+            df["_time"] = values["_time"]
+            df = df.drop(columns=["score"], errors="ignore")
+            df = df.sort_values("cpu_percent", ascending=False).head(20)
+            records.append(df)
+
+    return records
 
 
 def get_hardware_metrics(bucket, hostname, time_range="-5d"):

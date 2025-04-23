@@ -13,11 +13,11 @@ else:
 TOKEN = os.getenv("INFLUX_TOKEN")
 ORG = os.getenv("INFLUX_ORG")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    filename="ueba.log",
-)
+
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 
 def connect_to_influx():
