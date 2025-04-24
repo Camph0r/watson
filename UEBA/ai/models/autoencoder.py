@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
-
+import joblib
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -48,11 +48,16 @@ def load_autoencoder_model(user, input_shape=60, seq_len=10):
     return model
 
 
-def detect_anomalies_autoencoder(model, torch_sequence):
+def load_saved_scaler(hostname):
 
+    return joblib.load(f"saved/{hostname}/scaler.pkl")
+
+def detect_anomalies_autoencoder(model, torch_sequence):
     with torch.no_grad():
         reconstructed = model(torch_sequence)
-        loss = torch.mean((torch_sequence - reconstructed) ** 2, dim=1).numpy()
+        loss_tensor = torch.mean((torch_sequence - reconstructed) ** 2, dim=(1, 2))  # shape (1,)
+        loss_value = loss_tensor.item()  
 
-    threshold = 0.001
-    return loss, loss > threshold
+    threshold = 1.5
+    is_anomaly = loss_value > threshold
+    return loss_value, is_anomaly

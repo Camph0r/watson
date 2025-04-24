@@ -1,7 +1,7 @@
 import time
-from influxdb.influx_reader import get_hardware_metrics, get_software_metrics
+from influxdb.influx_reader import get_hardware_metrics, fetch_live_metrics
 from ai.models.isolation_forest import detect_anomalies_iforest, load_iforest_model
-from ai.models.autoencoder import detect_anomalies_autoencoder, load_autoencoder_model
+from ai.models.autoencoder import detect_anomalies_autoencoder, load_autoencoder_model, load_saved_scaler
 import pandas as pd
 from influxdb.influx_writer import write_hw_anomalies, write_sw_anomalies
 import logging
@@ -14,7 +14,7 @@ import numpy as np
 
 
 logger = logging.getLogger(__name__)
-# NEED TO SAVE SCALER FOR EACH USER
+
 # Try direct checking of host status
 
 
@@ -24,7 +24,7 @@ def monitor_user(bucket, hostname):
         iforest_model = load_iforest_model(hostname)
         autoencoder_model = load_autoencoder_model(hostname)
         autoencoder_model.eval()
-        scaler = StandardScaler()
+        scaler = load_saved_scaler(hostname) 
 
         buffer = deque(maxlen=10)
 
@@ -36,7 +36,7 @@ def monitor_user(bucket, hostname):
         try:
 
             hardware_metrics = get_hardware_metrics(bucket, hostname, time_range="-7s")
-            software_metrics = get_software_metrics(bucket, hostname, time_range="-7s")
+            software_metrics = fetch_live_metrics(bucket, hostname, time_range="-7s")
 
             iforest = detect_anomalies_iforest(hardware_metrics, iforest_model)
             write_hw_anomalies(iforest, hostname)
@@ -55,10 +55,10 @@ def monitor_user(bucket, hostname):
                 loss, is_anomaly = detect_anomalies_autoencoder(
                     autoencoder_model, torch_seq
                 )
-                print(f"Loss: {loss:.6f}, Anomaly: {bool(is_anomaly)}")
+                print(f"Loss: {loss:.4f}, Anomaly: {bool(is_anomaly)}")
 
             # process_anomaly_detection(software_metrics, hostname)
-            time.sleep(5)
+            time.sleep(7)
         except Exception as e:
             logger.warning(f"While monitoring {hostname}: {e}")
-            time.sleep(5)
+            time.sleep(7)

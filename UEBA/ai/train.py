@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 from models.autoencoder import AE
-
+import joblib
 from models.isolation_forest import save_iforest_model, train_iforest
 from sklearn.preprocessing import StandardScaler
 import logging
@@ -25,7 +25,7 @@ def setup_logging(level=logging.INFO):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def create_sequences(df_list, seq_len):
+def create_sequences(df_list, hostname,seq_len):
     sequences = []
     df_list = [df for df in df_list if len(df) == 20]
 
@@ -36,6 +36,9 @@ def create_sequences(df_list, seq_len):
         for df in chunk:
             scaler = StandardScaler()
             scaled = scaler.fit_transform(df[["cpu_percent", "mem_percent", "threads"]])
+            save_path = f"saved/{hostname}"
+            os.makedirs(save_path, exist_ok=True)
+            joblib.dump(scaler, os.path.join(save_path, "scaler.pkl"))
             tensor = torch.tensor(scaled, dtype=torch.float32)
             scaled_chunk_tensors.append(tensor)
 
@@ -44,10 +47,10 @@ def create_sequences(df_list, seq_len):
     return torch.stack(sequences)
 
 
-def train_autoencoder(df, save_path, epochs=1000, lr=0.001):
+def train_autoencoder(df, save_path, hostname,epochs=1000, lr=0.001 ):
     try:
 
-        sequences = create_sequences(df, seq_len=10)
+        sequences = create_sequences(df,hostname, seq_len=10)
         sequences = sequences.view(sequences.shape[0], sequences.shape[1], -1)
 
         model = AE(input_shape=60, seq_len=10).to(device)
@@ -60,7 +63,7 @@ def train_autoencoder(df, save_path, epochs=1000, lr=0.001):
             loss = criterion(reconstructed, sequences.to(device))
             loss.backward()
             optimizer.step()
-            if epoch % 50 == 0:
+            if epoch % 100 == 0:
                 print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
 
         torch.save(model.state_dict(), os.path.join(save_path, "autoencoder.pth"))
@@ -73,14 +76,14 @@ def train_models(df_software, df_hardware, user):
     save_path = f"saved/{user}"
     os.makedirs(save_path, exist_ok=True)
 
-    train_autoencoder(df_software, save_path)
+    train_autoencoder(df_software, save_path, user)
 
     iforest_model = train_iforest(df_hardware)
     save_iforest_model(iforest_model, user)
 
 
-# load_dotenv()
-# USERS = json.loads(os.getenv("USERS"))
-# software = get_software_metrics("mininet", USERS[0], time_range="-3d")
-# hardware = get_hardware_metrics("mininet", USERS[0], time_range="-3d")
-# train_models(software, hardware, USERS[0])
+load_dotenv()
+USERS = json.loads(os.getenv("USERS"))
+software = get_software_metrics("mininet", USERS[0], time_range="-3d")
+hardware = get_hardware_metrics("mininet", USERS[0], time_range="-3d")
+train_models(software, hardware, USERS[0])

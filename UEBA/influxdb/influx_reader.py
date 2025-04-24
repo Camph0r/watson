@@ -29,7 +29,7 @@ def query_metrics(bucket, hostname, metric_type, time_range="-5d"):
         else:
             raise ValueError(f"No data found for {metric_type} for {hostname}")
     except Exception as e:
-        logging.error(f"Failed to query {metric_type} for {hostname}: {e}")
+        logging.warning(f"Failed to query {metric_type} for {hostname}: {e}")
         return None
 
 
@@ -46,10 +46,28 @@ def get_software_metrics(bucket, hostname, time_range="-5d"):
             df["created"] = pd.to_datetime(df["created"])
             df["_time"] = values["_time"]
             df = df.drop(columns=["score"], errors="ignore")
-            df = df.sort_values("cpu_percent", ascending=False).head(20)
+            #df = df.sort_values("cpu_percent", ascending=False).head(20)
             records.append(df)
 
     return records
+
+
+def fetch_live_metrics(bucket, hostname, time_range="-10s"):
+    tables = query_metrics(bucket, hostname, "softwareMetrics", time_range)
+    if tables is None:
+        return None
+    records = []
+    for table in tables:
+        for row in table.records:
+            values = row.values
+            record = json.loads(values["_value"])
+            record = pd.DataFrame(record)
+            record["created"] = pd.to_datetime(record["created"])
+            record = record.drop(columns=["score"], errors="ignore")
+            record["_time"] = values["_time"]
+            records.append(record)
+    df = pd.concat(records).reset_index(drop=True)
+    return df
 
 
 def get_hardware_metrics(bucket, hostname, time_range="-5d"):
