@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   aggregator:
+    container_name: watson-aggregator
     build:
       context: ./aggregator
       dockerfile: Dockerfile
@@ -30,6 +31,7 @@ services:
         condition: service_healthy
 
   certregistry:
+    container_name: watson-certregistry
     build:
       context: ./certregistry
       dockerfile: Dockerfile
@@ -54,6 +56,7 @@ services:
       retries: 5
 
   influxdb:
+    container_name: watson-influxdb
     image: influxdb:2
     env_file:
       - .env
@@ -77,6 +80,7 @@ services:
       retries: 5
 
   redis:
+    container_name: watson-redis
     image: redis:7-alpine
     volumes:
       - redis-data:/data
@@ -90,6 +94,7 @@ services:
       timeout: 10s
       retries: 5
   ueba:
+    container_name: watson-ueba
     build:
       context: ./ueba
       dockerfile: Dockerfile
@@ -109,6 +114,63 @@ services:
         condition: service_healthy
     command: ["python", "main.py"]
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: watson-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    networks:
+      - watson-net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: watson-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - watson-net
+    restart: unless-stopped
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: watson-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - watson-net
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
 networks:
   watson-net:
     driver: bridge
@@ -116,3 +178,5 @@ networks:
 volumes:
   influxdb-data:
   redis-data:
+  grafana-data:
+  prometheus-data:
