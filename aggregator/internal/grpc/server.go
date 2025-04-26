@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/Camph0r/watson/aggregator/internal/certregistry"
 	"github.com/Camph0r/watson/aggregator/internal/influxdb"
@@ -68,9 +69,10 @@ func (s *GRPCServer) StreamMetrics(stream pb.MonitoringService_StreamMetricsServ
 			log.Printf("Error receiving metrics from %v: %v", deviceID, err)
 			return err
 		}
-		log.Println("Received metrics from: ", deviceID)
+		latency := float64(time.Now().UnixNano()-data.SendTimestamp) / 1e9 // seconds
+		log.Printf("Received metrics - device : %v latency %.4f sec\n", deviceID, latency)
 
-		if err := s.influxClient.WriteMetric(deviceID, data.HardwareMetrics, data.SoftwareMetrics); err != nil {
+		if err := s.influxClient.WriteMetric(deviceID, data.HardwareMetrics, data.SoftwareMetrics, latency); err != nil {
 			log.Printf("Error writing to InfluxDB: %v", err)
 		}
 	}

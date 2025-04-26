@@ -11,6 +11,7 @@ service MonitoringService {
 message Metrics {
     HardwareMetrics hardware_metrics = 1;
     repeated SoftwareMetrics software_metrics = 2;
+    int64 send_timestamp =  3;
 }
 
 message HardwareMetrics {

@@ -57,13 +57,14 @@ func (c *InfluxDBClient) Close() {
 	c.client.Close()
 }
 
-func (c *InfluxDBClient) WriteMetric(deviceID string, hardwareMetrics *pb.HardwareMetrics, softwareMetrics []*pb.SoftwareMetrics) error {
+func (c *InfluxDBClient) WriteMetric(deviceID string, hardwareMetrics *pb.HardwareMetrics, softwareMetrics []*pb.SoftwareMetrics, latency float64) error {
 	p := influxdb2.NewPoint(
 		"metrics",
 		map[string]string{"deviceID": deviceID},
 		map[string]interface{}{
 			"softwareMetrics": softwareMetrics,
 			"hardwareMetrics": hardwareMetrics,
+			"latency":         latency,
 		},
 		time.Now(),
 	)

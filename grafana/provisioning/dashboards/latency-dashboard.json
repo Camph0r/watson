@@ -1,0 +1,43 @@
+{
+    "id": null,
+    "title": "Latency Metrics",
+    "schemaVersion": 36,
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "min/avg/max latency",
+        "targets": [
+          {
+            "queryType": "Flux",
+            "query": "bucket = \"${bucket}\"\n\ndata = from(bucket: bucket)\n  |> range(start: ${__range_s}s * -1)\n  |> filter(fn: (r) => r._measurement == \"metrics\" and r._field == \"latency\")\n\nmin = data |> min()   |> set(key: \"stat\", value: \"min\")\navg = data |> mean()  |> set(key: \"stat\", value: \"avg\")\nmax = data |> max()   |> set(key: \"stat\", value: \"max\")\n\nunion(tables: [min, avg, max])\n  |> keep(columns: [\"_time\",\"_value\",\"stat\"])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "mappings": [],
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] }
+          }
+        },
+        "options": {
+          "legend": { "displayMode": "list", "placement": "bottom" }
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        { 
+          "type": "datasource",
+          "name": "DS_INFLUX",
+          "datasource": { "type": "influxdb", "uid": "" }
+        },
+        {
+          "type": "constant",
+          "name": "bucket",
+          "query": "YOUR_BUCKET_NAME"
+        }
+      ]
+    }
+  }
+  
