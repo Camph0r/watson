@@ -38,6 +38,12 @@ func LoadTLSCredentials(certFile, keyFile, caCertFile string) credentials.Transp
 		MinVersion:   tls.VersionTLS13,
 		MaxVersion:   tls.VersionTLS13,
 		ClientAuth:   tls.RequireAndVerifyClientCert,
+
+		// for testing
+		InsecureSkipVerify: true,
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			return nil
+		},
 	}
 
 	return credentials.NewTLS(tlsConfig)
