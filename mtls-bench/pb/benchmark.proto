@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package benchmark;
+
+// If you initialized your Go module as 'mtlsbench' (e.g., go mod init mtlsbench), use that.
+// Otherwise, adjust to your actual module path.
+option go_package = "mtlsbench/pb;benchmark";
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
